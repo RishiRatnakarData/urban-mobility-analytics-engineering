@@ -1,0 +1,13 @@
+name: nyc_mobility
+version: 1.0.0
+config-version: 2
+profile: nyc_mobility
+model-paths: ["models"]
+clean-targets: ["target", "dbt_packages"]
+models:
+  nyc_mobility:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+

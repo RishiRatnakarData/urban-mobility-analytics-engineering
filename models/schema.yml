@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_trips
+    description: Clean trip-level records produced by the Silver pipeline.
+    columns:
+      - name: trip_id
+        tests: [not_null, unique]
+      - name: pickup_datetime
+        tests: [not_null]
+      - name: pickup_zone
+        tests: [not_null]
+  - name: fct_daily_zone_trips
+    description: One row per pickup date and pickup zone for dashboard serving.
+    columns:
+      - name: pickup_date
+        tests: [not_null]
+      - name: pickup_zone
+        tests: [not_null]
+      - name: trip_count
+        tests: [not_null]
+

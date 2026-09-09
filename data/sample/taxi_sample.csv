@@ -1,0 +1,14 @@
+trip_id,pickup_datetime,dropoff_datetime,pickup_zone,dropoff_zone,passenger_count,trip_distance,fare_amount,tip_amount,payment_type
+T001,2025-01-02 08:10:00,2025-01-02 08:32:00,Midtown East,Upper East Side,1,3.4,19.5,4.0,Card
+T002,2025-01-02 09:05:00,2025-01-02 09:28:00,Lower Manhattan,Midtown East,2,4.2,23.0,4.6,Card
+T003,2025-01-02 18:40:00,2025-01-02 18:58:00,Times Square,Chelsea,1,2.1,15.0,0.0,Cash
+T004,2025-01-03 07:20:00,2025-01-03 07:51:00,Upper West Side,Lower Manhattan,1,6.1,31.0,6.2,Card
+T005,2025-01-03 12:02:00,2025-01-03 12:25:00,Chelsea,Midtown East,3,3.0,18.0,3.6,Card
+T006,2025-01-03 22:11:00,2025-01-03 22:35:00,Times Square,Upper West Side,2,4.8,27.0,5.4,Card
+T007,2025-01-04 10:00:00,2025-01-04 10:12:00,Lower Manhattan,Chelsea,1,1.7,12.0,2.4,Card
+T008,2025-01-04 15:43:00,2025-01-04 16:10:00,Midtown East,Lower Manhattan,1,5.2,28.5,0.0,Cash
+T009,2025-01-04 19:15:00,2025-01-04 19:44:00,Upper East Side,Times Square,2,4.1,24.0,4.8,Card
+T010,2025-01-05 06:30:00,2025-01-05 06:55:00,Chelsea,Upper East Side,1,4.5,25.0,5.0,Card
+T011,2025-01-05 14:08:00,2025-01-05 14:21:00,Upper West Side,Midtown East,1,2.0,13.5,2.7,Card
+T012,2025-01-05 20:31:00,2025-01-05 20:59:00,Lower Manhattan,Times Square,2,5.7,30.0,0.0,Cash
+
