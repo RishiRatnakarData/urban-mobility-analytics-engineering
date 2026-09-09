@@ -1,18 +1,25 @@
-# NYC Mobility Analytics Engineering Platform
+# Urban Mobility Analytics Engineering Platform
 
-[![CI](https://github.com/YOUR_USERNAME/nyc-mobility-analytics-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/nyc-mobility-analytics-engineering/actions/workflows/ci.yml)
+[![CI](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/workflows/ci.yml)
 
 A production-shaped mobility pipeline using Bronze/Silver/Gold modeling, explicit data-quality evidence, PySpark/Fabric implementation, dbt marts, automated tests, and a Power BI serving design.
 
 > Portfolio status: local sample implementation included. Change this to `Fabric implementation complete` only after following `docs/fabric_build.md` in your own workspace.
 
-## What this proves
+## What the current local build proves
 
-- Reproducible ingestion and medallion-layer responsibilities.
-- PySpark cleaning, deterministic keys, Delta tables, and persisted checks in Microsoft Fabric.
-- dbt staging, incremental mart logic, schema tests, and lineage.
-- Cloud-independent CI for linting, unit tests, local pipeline, and dbt build.
-- Business-ready Power BI measures with a documented grain.
+- Reproducible sample ingestion with explicit Bronze, Silver, and Gold responsibilities.
+- Python transformation and validation behavior covered by two automated tests.
+- Twelve sample records processed through all three local layers with six quality checks passing.
+- Two dbt models and seven data tests completed successfully in DuckDB.
+- A cloud-independent local contract that reviewers can run without Microsoft Fabric access.
+
+## What still requires execution evidence
+
+- An authenticated Microsoft Fabric run using an official NYC TLC monthly Parquet file.
+- PySpark execution, Delta-table persistence, rerun/idempotency validation, and failure recovery.
+- A completed Power BI semantic model and four-page report.
+- A successful GitHub Actions run after the repository is published.
 
 ## Local build
 
@@ -27,6 +34,18 @@ dbt build --profiles-dir .
 ```
 
 This creates local Bronze, Silver, and Gold Parquet outputs, six persisted quality checks, and a DuckDB dbt warehouse. It allows reviewers to verify the logic without a Fabric account.
+
+### Verified local evidence
+
+Validation performed on September 9, 2026:
+
+| Check | Result |
+|---|---|
+| Python tests | 2/2 passed |
+| Sample Bronze/Silver/Gold rows | 12 / 12 / 12 |
+| Sample quality checks | 6/6 passed |
+| dbt build | 2 models and 7 tests passed; 9/9 total |
+| Environment | Python 3.12.10, dbt Core 1.12.4, dbt-duckdb 1.9.4 |
 
 ## Fabric build
 
@@ -50,7 +69,7 @@ See [architecture and design decisions](docs/architecture.md).
 | Pipeline run time | `[minutes/seconds]` |
 | Rerun/idempotency result | `[exact observation]` |
 | Failure-recovery test | `[failure injected and repair]` |
-| dbt result | `[models/tests passed]` |
+| dbt result | `Local DuckDB build: 2 models and 7 tests passed; 9/9 total` |
 
 ## Limitations
 
@@ -72,5 +91,5 @@ docs/                architecture, Fabric, and Power BI instructions
 
 ## Author
 
-Rishi Ratnakar - [LinkedIn](https://www.linkedin.com/in/YOUR_LINKEDIN_SLUG) | [GitHub](https://github.com/YOUR_USERNAME)
+Rishi Ratnakar - [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) | [GitHub](https://github.com/RishiRatnakarData)
 
