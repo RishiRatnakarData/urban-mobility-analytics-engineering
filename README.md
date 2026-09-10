@@ -6,9 +6,10 @@ Mobility operations teams need daily zone metrics they can trust after duplicate
 and late-arriving records enter the pipeline. This project implements a testable Bronze/Silver/Gold
 contract locally and provides a Databricks PySpark/Delta implementation for authenticated execution.
 
-> **Portfolio status:** the local Python and dbt contract is validated. The Databricks notebook is
-> implementation-ready, but its cloud claims remain pending until the author completes
-> [`docs/databricks_build.md`](docs/databricks_build.md) and records real run evidence.
+> **Portfolio status:** validated locally and through authenticated Databricks Free Edition
+> execution. The cloud build processed official NYC TLC January and February 2025 Parquet files,
+> created five Delta tables, passed all eight quality checks, proved idempotency and controlled
+> recovery, handled a January-after-February late arrival, and produced a four-page Power BI report.
 
 ## Current verified result
 
@@ -23,7 +24,23 @@ Refactor validation performed on September 10, 2026:
 | Environment | Python 3.12.10, dbt Core 1.12.4, dbt-duckdb 1.9.4 |
 
 The committed fixture is intentionally tiny. These results verify behavior and reproducibility, not
-real-world traffic volume or Databricks execution.
+real-world traffic volume. Cloud-scale evidence is recorded separately below.
+
+## Authenticated Databricks result
+
+Execution performed on Databricks Free Edition on September 10, 2026 UTC:
+
+| Scenario | Bronze rows | Silver rows | Gold rows | Quality | Refreshed dates | Duration |
+|---|---:|---:|---:|---:|---:|---:|
+| February 2025 initial load | 3,577,543 | 3,306,910 | 6,668 | 8/8 | 30 | 86.66 s |
+| February idempotent rerun | 3,577,543 | 3,306,910 | 6,668 | 8/8 | 30 | 163.55 s |
+| Recovery after missing-source test | 3,577,543 | 3,306,910 | 6,668 | 8/8 | 30 | 149.60 s |
+| January processed after February | 7,052,769 | 6,560,019 | 13,884 | 8/8 | 33 | 150.97 s |
+
+The late-arrival result contains 3,253,109 January Silver rows and 3,306,910 February Silver rows.
+The controlled test raised `FileNotFoundError` before table writes, and the repaired run returned to
+the same February business-table counts. On rerun, `trip_id_unique` and `gold_grain_unique` remained
+passing while audit history stayed append-only.
 
 ## What the project demonstrates
 
@@ -99,24 +116,29 @@ part of this repository's runtime.
 
 ## Claims ledger
 
-Replace only bracketed fields with observed evidence from your own run.
-
 | Claim | Evidence |
 |---|---|
 | Local Python tests | `3/3 passed` |
 | Local sample rows | `Bronze 12; Silver 12; Gold 12` |
 | Local quality checks | `6/6 passed` |
 | Local dbt result | `2 models + 8 tests; 10/10 nodes` |
-| Databricks run date | `[UTC date]` |
-| Official source | `[TLC URL; 2025-02 and optional 2025-01; file sizes]` |
-| Databricks business rows | `[Bronze; Silver; Gold]` |
-| Databricks quality checks | `[passed / 8]` |
-| Pipeline duration | `[seconds]` |
-| Idempotent rerun | `[before/after counts and duplicate-key results]` |
-| Controlled recovery | `[missing-path failure and repaired run]` |
-| Late-arriving data | `[January-after-February result and refreshed partitions]` |
-| Power BI | `[validated totals and screenshot path]` |
-| GitHub Actions | `[successful run URL]` |
+| Databricks run date | `2026-09-10 UTC` |
+| Official source | `NYC TLC Yellow Taxi 2025-02: 60,343,086 bytes; 2025-01: 59,158,238 bytes` |
+| Databricks business rows | `After both months: Bronze 7,052,769; Silver 6,560,019; Gold 13,884` |
+| Databricks quality checks | `8/8 passed` |
+| Pipeline duration | `86.66 s initial; 163.55 s rerun; 149.60 s recovery; 150.97 s late arrival` |
+| Idempotent rerun | `Counts unchanged at 3,577,543 / 3,306,910 / 6,668; uniqueness checks passed` |
+| Controlled recovery | `Missing-path FileNotFoundError occurred before writes; repaired run passed 8/8` |
+| Late-arriving data | `January processed after February; 33 partitions refreshed; both months retained` |
+| Power BI | `6,560,019 trips; $138,813,614.92 revenue; $21.16/trip; 5.68 mi; 37.57% peak share` |
+| GitHub Actions | `Pending first public push` |
+
+## Power BI report
+
+![Urban Mobility Operations Overview](docs/images/operations_overview.png)
+
+Additional pages: [Zone Performance](docs/images/zone_performance.png) ·
+[Time Patterns](docs/images/time_patterns.png) · [Data Quality](docs/images/data_quality.png)
 
 ## Repository map
 
@@ -149,5 +171,5 @@ idempotency, late arrivals, layer responsibilities, dbt's role, and the limits o
 
 ## Author
 
-Rishi Ratnakar — [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) |
+Rishi Ratnakar â€” [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) |
 [GitHub](https://github.com/RishiRatnakarData)
