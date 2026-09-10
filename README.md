@@ -131,14 +131,14 @@ part of this repository's runtime.
 | Controlled recovery | `Missing-path FileNotFoundError occurred before writes; repaired run passed 8/8` |
 | Late-arriving data | `January processed after February; 33 partitions refreshed; both months retained` |
 | Power BI | `6,560,019 trips; $138,813,614.92 revenue; $21.16/trip; 5.68 mi; 37.57% peak share` |
-| GitHub Actions | `Pending first public push` |
+| GitHub Actions | [CI run 34505698381 passed](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/runs/34505698381) |
 
 ## Power BI report
 
 ![Urban Mobility Operations Overview](docs/images/operations_overview.png)
 
-Additional pages: [Zone Performance](docs/images/zone_performance.png) ·
-[Time Patterns](docs/images/time_patterns.png) · [Data Quality](docs/images/data_quality.png)
+Additional pages: [Zone Performance](docs/images/zone_performance.png) Â·
+[Time Patterns](docs/images/time_patterns.png) Â· [Data Quality](docs/images/data_quality.png)
 
 ## Repository map
 
@@ -171,5 +171,5 @@ idempotency, late arrivals, layer responsibilities, dbt's role, and the limits o
 
 ## Author
 
-Rishi Ratnakar â€” [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) |
+Rishi Ratnakar Ã¢â‚¬â€ [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) |
 [GitHub](https://github.com/RishiRatnakarData)
