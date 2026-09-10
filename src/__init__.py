@@ -1,2 +1,2 @@
-"""Local reproducibility contract for the Databricks portfolio project."""
+"""Local implementation of the urban mobility medallion pipeline."""
 

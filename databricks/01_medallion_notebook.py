@@ -235,7 +235,7 @@ run_log.write.format("delta").mode("append").saveAsTable(RUN_TABLE)
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC Export the small Gold aggregate and current run's quality evidence for Power BI Desktop.
+# MAGIC Export the small Gold aggregate and current run's quality results for Power BI Desktop.
 
 # COMMAND ----------
 
