@@ -5,6 +5,7 @@ test:
 	pytest -q
 lint:
 	ruff check src tests
+	python -m py_compile databricks/01_medallion_notebook.py
 sample:
 	python -m src.pipeline --sample
 dbt-build:

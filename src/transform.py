@@ -52,5 +52,39 @@ def to_gold(silver: pd.DataFrame) -> pd.DataFrame:
             peak_trip_share=("is_peak", "mean"),
         )
         .sort_values(["pickup_date", "trip_count"], ascending=[True, False])
+        .reset_index(drop=True)
+    )
+
+
+def upsert_silver(current: pd.DataFrame, incoming_raw: pd.DataFrame) -> pd.DataFrame:
+    """Insert new trips and replace matching trips with the latest valid record."""
+    incoming = to_silver(incoming_raw)
+    if current.empty:
+        return incoming
+    combined = pd.concat([current, incoming], ignore_index=True)
+    return (
+        combined.drop_duplicates(subset="trip_id", keep="last")
+        .sort_values(["pickup_datetime", "trip_id"])
+        .reset_index(drop=True)
+    )
+
+
+def refresh_gold_for_dates(
+    current_gold: pd.DataFrame,
+    silver: pd.DataFrame,
+    affected_dates: list[object],
+) -> pd.DataFrame:
+    """Recompute only date partitions touched by an incoming batch."""
+    dates = set(affected_dates)
+    if not dates:
+        return current_gold.copy()
+    refreshed = to_gold(silver[silver["pickup_date"].isin(dates)])
+    if current_gold.empty:
+        return refreshed
+    unchanged = current_gold[~current_gold["pickup_date"].isin(dates)]
+    return (
+        pd.concat([unchanged, refreshed], ignore_index=True)
+        .sort_values(["pickup_date", "trip_count"], ascending=[True, False])
+        .reset_index(drop=True)
     )
 

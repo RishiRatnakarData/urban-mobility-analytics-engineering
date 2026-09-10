@@ -2,14 +2,14 @@
 
 ```mermaid
 flowchart TD
-    A[NYC TLC Parquet] --> B[Fabric pipeline]
+    A[Official TLC Parquet] --> B[Databricks notebook]
     B --> C[Bronze Delta raw]
     C --> D[PySpark Silver clean]
-    D --> E[Persisted DQ results]
-    D --> F[Gold aggregates]
-    F --> G[dbt serving marts]
-    G --> H[Power BI semantic model]
-    I[GitHub Actions] --> J[Lint, tests, local build, dbt tests]
+    D --> E[Quality and run logs]
+    D --> F[Partitioned Gold Delta]
+    F --> G[Power BI exports]
+    H[Sample fixture] --> I[Local pandas and dbt]
+    I --> J[GitHub Actions]
 ```
 
 ## Layer responsibilities
@@ -19,13 +19,21 @@ flowchart TD
 | Bronze | Source row | Preserve source values and ingestion metadata |
 | Silver | Valid unique trip | Type, deduplicate, validate, and derive reusable features |
 | Gold | Date and pickup zone | Curated operational metrics for BI |
-| dbt mart | Date and pickup zone | Tested analytics contract and incremental serving pattern |
+| Audit | Check or pipeline run | Persist pass/fail observations and reproducibility evidence |
+| Local dbt mart | Date and pickup zone | Tested SQL contract and incremental serving pattern |
 
 ## Engineering reasoning
 
 - Separate raw, validated, and curated layers so failures are traceable.
-- Use deterministic trip keys and overwrite sample mode for idempotency.
+- Use deterministic hashes and Delta MERGE so repeated source batches do not duplicate business rows.
 - Persist quality results rather than only printing them.
-- Keep CI cloud-independent: it verifies transformations and dbt locally; Fabric integration still requires an authenticated workspace test.
-- Use incremental dbt logic at the reporting mart boundary; production would use a watermark and merge strategy for late-arriving trips.
+- Recompute only Gold dates touched by an incoming batch, allowing older trips to arrive after newer data.
+- Keep CI cloud-independent: it verifies transformations, notebook syntax, and dbt locally; Databricks still requires authenticated execution evidence.
+- Export only the small Gold and quality tables to Power BI; raw trip data stays outside the BI layer.
+
+## Execution boundaries
+
+The Databricks and local paths implement the same layer responsibilities but are not presented as the
+same runtime. Databricks provides the PySpark/Delta evidence. Pandas, Parquet, DuckDB, and dbt provide
+a fast reviewer contract that runs in CI without cloud credentials.
 

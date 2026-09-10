@@ -1,2 +1,2 @@
-"""Local companion pipeline for the Fabric portfolio project."""
+"""Local reproducibility contract for the Databricks portfolio project."""
 

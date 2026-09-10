@@ -2,94 +2,152 @@
 
 [![CI](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/workflows/ci.yml)
 
-A production-shaped mobility pipeline using Bronze/Silver/Gold modeling, explicit data-quality evidence, PySpark/Fabric implementation, dbt marts, automated tests, and a Power BI serving design.
+Mobility operations teams need daily zone metrics they can trust after duplicate, invalid, rerun,
+and late-arriving records enter the pipeline. This project implements a testable Bronze/Silver/Gold
+contract locally and provides a Databricks PySpark/Delta implementation for authenticated execution.
 
-> Portfolio status: local sample implementation included. Change this to `Fabric implementation complete` only after following `docs/fabric_build.md` in your own workspace.
+> **Portfolio status:** the local Python and dbt contract is validated. The Databricks notebook is
+> implementation-ready, but its cloud claims remain pending until the author completes
+> [`docs/databricks_build.md`](docs/databricks_build.md) and records real run evidence.
 
-## What the current local build proves
+## Current verified result
 
-- Reproducible sample ingestion with explicit Bronze, Silver, and Gold responsibilities.
-- Python transformation and validation behavior covered by two automated tests.
-- Twelve sample records processed through all three local layers with six quality checks passing.
-- Two dbt models and seven data tests completed successfully in DuckDB.
-- A cloud-independent local contract that reviewers can run without Microsoft Fabric access.
+Refactor validation performed on September 10, 2026:
 
-## What still requires execution evidence
+| Check | Verified result |
+|---|---|
+| Python transformation tests | 3/3 passed, including a late-arrival/upsert case |
+| Sample Bronze / Silver / Gold rows | 12 / 12 / 12 |
+| Local persisted quality checks | 6/6 passed |
+| dbt DuckDB build | 2 models and 8 tests passed; 10/10 nodes |
+| Environment | Python 3.12.10, dbt Core 1.12.4, dbt-duckdb 1.9.4 |
 
-- An authenticated Microsoft Fabric run using an official NYC TLC monthly Parquet file.
-- PySpark execution, Delta-table persistence, rerun/idempotency validation, and failure recovery.
-- A completed Power BI semantic model and four-page report.
-- A successful GitHub Actions run after the repository is published.
+The committed fixture is intentionally tiny. These results verify behavior and reproducibility, not
+real-world traffic volume or Databricks execution.
 
-## Local build
+## What the project demonstrates
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+- A raw-to-curated medallion design with explicit grain and ownership at every layer.
+- Schema validation, invalid-row filtering, deterministic keys, and duplicate protection.
+- Persisted data-quality and pipeline-run evidence rather than console-only assertions.
+- Delta MERGE for repeatable Bronze/Silver ingestion in the Databricks notebook.
+- Partition-scoped Gold refreshes for late-arriving historical trips.
+- dbt staging and an incremental daily-zone mart with a 62-day lookback and tested grain.
+- Cloud-independent CI for Python, notebook syntax, the sample pipeline, and dbt.
+- A documented Power BI Desktop semantic model based on small curated exports.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A[Official TLC Parquet] --> B[Databricks serverless notebook]
+    B --> C[Bronze Delta]
+    C --> D[PySpark Silver Delta]
+    D --> E[Quality and run logs]
+    D --> F[Partitioned Gold Delta]
+    F --> G[Power BI exports]
+    H[Local fixture] --> I[Pandas, Parquet, DuckDB, dbt]
+    I --> J[GitHub Actions]
+```
+
+See [`docs/architecture.md`](docs/architecture.md) for layer grains, design decisions, and the
+separation between local and cloud evidence.
+
+## Reproduce the local contract
+
+### Windows PowerShell
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-pytest -q
+python -m pytest -q
 python -m src.pipeline --sample
 dbt build --profiles-dir .
 ```
 
-This creates local Bronze, Silver, and Gold Parquet outputs, six persisted quality checks, and a DuckDB dbt warehouse. It allows reviewers to verify the logic without a Fabric account.
+### macOS or Linux
 
-### Verified local evidence
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m pytest -q
+python -m src.pipeline --sample
+dbt build --profiles-dir .
+```
 
-Validation performed on September 9, 2026:
+The sample command persists Bronze, Silver, and Gold Parquet outputs, six quality results, and a JSON
+run summary. Generated data and artifacts are ignored by Git.
 
-| Check | Result |
-|---|---|
-| Python tests | 2/2 passed |
-| Sample Bronze/Silver/Gold rows | 12 / 12 / 12 |
-| Sample quality checks | 6/6 passed |
-| dbt build | 2 models and 7 tests passed; 9/9 total |
-| Environment | Python 3.12.10, dbt Core 1.12.4, dbt-duckdb 1.9.4 |
+## Execute on Databricks
 
-## Fabric build
+Follow the [Databricks Free Edition checklist](docs/databricks_build.md). It covers:
 
-Follow the [exact Fabric checklist](docs/fabric_build.md), then replace the placeholder below with your real screenshot.
+1. An official NYC TLC monthly Parquet source.
+2. Notebook import and managed-volume upload.
+3. Five Delta tables and eight cloud quality checks.
+4. Same-file rerun/idempotency validation.
+5. A controlled missing-path failure and successful recovery.
+6. A January-after-February late-arrival demonstration.
+7. Curated CSV exports for Power BI Desktop.
 
-![Fabric evidence placeholder](docs/images/architecture_placeholder.svg)
+Databricks Free Edition is sufficient for this portfolio execution; an Azure subscription is not
+part of this repository's runtime.
 
-## Architecture
+## Claims ledger
 
-See [architecture and design decisions](docs/architecture.md).
-
-## Claims ledger - replace with actual evidence
+Replace only bracketed fields with observed evidence from your own run.
 
 | Claim | Evidence |
 |---|---|
-| Source and month | `[NYC TLC URL and YYYY-MM]` |
-| Bronze rows | `[exact count]` |
-| Silver valid unique trips | `[exact count]` |
-| Gold rows and grain | `[count; date x pickup zone]` |
-| Quality checks | `[passed / total]` |
-| Pipeline run time | `[minutes/seconds]` |
-| Rerun/idempotency result | `[exact observation]` |
-| Failure-recovery test | `[failure injected and repair]` |
-| dbt result | `Local DuckDB build: 2 models and 7 tests passed; 9/9 total` |
-
-## Limitations
-
-- The committed data is a tiny synthetic-style fixture for CI, not representative of NYC operations.
-- Local pandas/DuckDB execution validates logic but is not a substitute for a Fabric integration run.
-- A production platform needs incremental ingestion, late-arrival rules, observability alerts, access control, cost tests, and deployment environments.
-- Taxi demand does not represent all mobility demand and can reflect geographic and service-access biases.
+| Local Python tests | `3/3 passed` |
+| Local sample rows | `Bronze 12; Silver 12; Gold 12` |
+| Local quality checks | `6/6 passed` |
+| Local dbt result | `2 models + 8 tests; 10/10 nodes` |
+| Databricks run date | `[UTC date]` |
+| Official source | `[TLC URL; 2025-02 and optional 2025-01; file sizes]` |
+| Databricks business rows | `[Bronze; Silver; Gold]` |
+| Databricks quality checks | `[passed / 8]` |
+| Pipeline duration | `[seconds]` |
+| Idempotent rerun | `[before/after counts and duplicate-key results]` |
+| Controlled recovery | `[missing-path failure and repaired run]` |
+| Late-arriving data | `[January-after-February result and refreshed partitions]` |
+| Power BI | `[validated totals and screenshot path]` |
+| GitHub Actions | `[successful run URL]` |
 
 ## Repository map
 
 ```text
-src/                 local reproducible medallion pipeline
-fabric/              paste-ready Fabric PySpark notebook source
-models/              dbt staging and incremental mart
-tests/               transformation and grain checks
-docs/                architecture, Fabric, and Power BI instructions
-.github/workflows/   automated local build and tests
+databricks/          importable PySpark/Delta source notebook
+src/                 local medallion and late-arrival contract
+models/              dbt staging and incremental serving mart
+tests/               transformation, late-arrival, and dbt-grain tests
+docs/                architecture, execution, Power BI, and interview guidance
+data/sample/         small committed fixture for deterministic CI
+.github/workflows/   lint, tests, sample execution, and dbt build
 ```
+
+## Evidence boundaries and limitations
+
+- The sample fixture is synthetic-style validation data, not representative of city operations.
+- The official cloud source is NYC taxi data; the broader title refers to the transferable pipeline
+  pattern, not a claim that multiple cities are currently loaded.
+- Local pandas/DuckDB results do not prove Databricks execution or workspace permissions.
+- The deterministic trip key can theoretically collide when distinct trips share its input fields.
+- A production system would require orchestrated jobs, incremental file discovery, quarantine rules,
+  alert delivery, access control, environment promotion, and cost/performance testing.
+- Taxi activity does not represent every travel mode and may reflect geographic and service-access
+  biases.
+
+## Interview preparation
+
+Use [`docs/interview_guide.md`](docs/interview_guide.md) to practice the five-minute story and explain
+idempotency, late arrivals, layer responsibilities, dbt's role, and the limits of CI.
 
 ## Author
 
-Rishi Ratnakar - [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) | [GitHub](https://github.com/RishiRatnakarData)
-
+Rishi Ratnakar — [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) |
+[GitHub](https://github.com/RishiRatnakarData)

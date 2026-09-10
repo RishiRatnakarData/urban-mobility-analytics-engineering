@@ -1,4 +1,8 @@
-{{ config(materialized='incremental', unique_key=['pickup_date', 'pickup_zone']) }}
+{{ config(
+    materialized='incremental',
+    unique_key=['pickup_date', 'pickup_zone'],
+    incremental_strategy='delete+insert'
+) }}
 
 select
     pickup_date,
@@ -10,7 +14,11 @@ select
     round(avg(is_peak), 4) as peak_trip_share
 from {{ ref('stg_trips') }}
 {% if is_incremental() %}
-where pickup_date >= (select coalesce(max(pickup_date), date '1900-01-01') from {{ this }})
+-- A 62-day lookback captures a prior monthly batch that arrives after a newer one.
+where pickup_date >= (
+    select coalesce(max(pickup_date) - interval '62 days', date '1900-01-01')
+    from {{ this }}
+)
 {% endif %}
 group by 1, 2
 

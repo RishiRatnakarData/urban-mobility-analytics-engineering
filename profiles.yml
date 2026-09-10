@@ -1,4 +1,4 @@
-nyc_mobility:
+urban_mobility:
   target: dev
   outputs:
     dev:

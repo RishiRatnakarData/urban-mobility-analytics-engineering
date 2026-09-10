@@ -16,6 +16,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: ruff check src tests
+      - run: python -m py_compile databricks/01_medallion_notebook.py
       - run: pytest -q
       - run: python -m src.pipeline --sample
       - run: dbt build --profiles-dir .
