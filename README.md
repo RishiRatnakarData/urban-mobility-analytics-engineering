@@ -36,10 +36,12 @@ The four-page Power BI report focuses on operational demand, geographic performa
 | [![Operations overview](docs/images/operations_overview.png)](docs/images/operations_overview.png) | [![Zone performance](docs/images/zone_performance.png)](docs/images/zone_performance.png) |
 | Revenue, trips, distance, and daily demand | Pickup-zone activity and comparative metrics |
 
-| Time patterns | Data quality |
+| Time patterns | Pipeline quality — documented evidence |
 |:---:|:---:|
-| [![Time patterns](docs/images/time_patterns.png)](docs/images/time_patterns.png) | [![Data quality](docs/images/data_quality.png)](docs/images/data_quality.png) |
-| Demand seasonality and peak-period share | Quality pass rates and observed checks |
+| [![Time patterns](docs/images/time_patterns.png)](docs/images/time_patterns.png) | [![Databricks quality evidence summary](docs/images/cloud_quality_evidence.png)](docs/images/cloud_quality_evidence.png) |
+| Demand seasonality and peak-period share | Clear view of the **September 10, 2026 historical cloud run** |
+
+The quality figure above is a **derived evidence graphic, not a Power BI screenshot**. The original, unmodified [Power BI Data Quality page](docs/images/data_quality.png) remains available. [Quality figure provenance](docs/QUALITY_EVIDENCE_GUIDE.md).
 
 [Power BI measures and report design](docs/power_bi.md)
 
