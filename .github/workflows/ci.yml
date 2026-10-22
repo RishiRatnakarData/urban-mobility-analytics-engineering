@@ -20,3 +20,6 @@ jobs:
       - run: pytest -q
       - run: python -m src.pipeline --sample
       - run: dbt build --profiles-dir .
+      - name: Verify local quality summary
+        run: |
+          python -c "import json; from pathlib import Path; p=Path('artifacts/run_summary.json'); d=json.loads(p.read_text()); assert d['quality_checks_passed']==10 and d['quality_checks_total']==10; assert d['silver_rows']==12"

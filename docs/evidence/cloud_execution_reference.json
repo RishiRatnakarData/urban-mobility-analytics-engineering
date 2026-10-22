@@ -1,0 +1,14 @@
+{
+  "source": "Previous Databricks execution documented in docs/databricks_execution.md; evidence predates the local v1 upgrade",
+  "execution_date_utc": "2026-09-10",
+  "runtime": "Databricks Free Edition / PySpark / Delta Lake",
+  "source_dataset": "NYC TLC Yellow Taxi January and February 2025",
+  "run_metrics": [
+    {"scenario": "February initial", "bronze_rows": 3577543, "silver_rows": 3306910, "gold_rows": 6668, "quality_passed": 8, "quality_total": 8, "refreshed_dates": 30, "duration_seconds": 86.66},
+    {"scenario": "February rerun", "bronze_rows": 3577543, "silver_rows": 3306910, "gold_rows": 6668, "quality_passed": 8, "quality_total": 8, "refreshed_dates": 30, "duration_seconds": 163.55},
+    {"scenario": "Recovery", "bronze_rows": 3577543, "silver_rows": 3306910, "gold_rows": 6668, "quality_passed": 8, "quality_total": 8, "refreshed_dates": 30, "duration_seconds": 149.60},
+    {"scenario": "January late arrival", "bronze_rows": 7052769, "silver_rows": 6560019, "gold_rows": 13884, "quality_passed": 8, "quality_total": 8, "refreshed_dates": 33, "duration_seconds": 150.97}
+  ],
+  "final_silver_by_month": {"2025-01": 3253109, "2025-02": 3306910},
+  "verified_scope": "Historical run reports already present in source repository. Current local upgrade not rerun in Databricks."
+}

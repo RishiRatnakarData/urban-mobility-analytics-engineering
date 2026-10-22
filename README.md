@@ -1,146 +1,120 @@
 # Urban Mobility Analytics Engineering
 
-[![CI](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/workflows/ci.yml)
+**An end-to-end NYC taxi analytics platform built around Databricks, Delta Lake, validated medallion pipelines, SQL modeling, and Power BI reporting.** Designed to transform multi-million-row trip files into reliable operational metrics while supporting idempotent ingestion, historical late arrivals, and data-quality monitoring.
 
-An end-to-end data engineering platform for NYC Yellow Taxi operations. It processes official TLC Parquet files through a Databricks Delta Lake medallion architecture, validates data quality, handles reruns and late-arriving data, models curated metrics with dbt, and presents results in a four-page Power BI report.
+**Databricks · PySpark · Delta Lake · Python · dbt · DuckDB · Power BI · GitHub Actions**
 
-![Urban Mobility Operations Overview](docs/images/operations_overview.png)
+![Urban Mobility operations overview dashboard](docs/images/operations_overview.png)
 
-## Business problem
+[**Dashboard gallery**](#dashboard-gallery) · [**Results**](#selected-results) · [**Architecture**](#solution-architecture) · [**Cloud execution**](docs/databricks_execution.md) · [**Engineering validation**](docs/ENGINEERING_VALIDATION_v1.md)
 
-Raw taxi trip files contain millions of records and may arrive late, contain invalid values, or be processed more than once. This project converts those files into trusted daily pickup-zone metrics while preserving traceability and preventing duplicate business records.
+## Project overview
 
-It answers four engineering and analytical questions:
+Official NYC TLC Yellow Taxi data arrives as large Parquet files that can contain incomplete records, duplicated trips, and out-of-order batches. This project implements a **Bronze → Silver → Gold** pipeline to preserve source traceability, validate trip-level records, maintain unique trip keys, and serve daily pickup-zone metrics to Power BI.
 
-- Can monthly source files be ingested repeatedly without duplicating trips?
-- Can invalid and duplicate records be removed before analytics?
-- Can historical dates be refreshed when older data arrives after newer data?
-- Can operations teams monitor demand, revenue, trip characteristics, and pipeline quality?
+The Databricks implementation uses PySpark and Delta Lake tables. A separate offline implementation uses pandas, Parquet, DuckDB, and dbt to exercise transformations and quality contracts in CI without cloud credentials.
 
-## Key results
+## Selected results
 
-- Processed **7,052,769 Bronze rows** across January and February 2025.
-- Produced **6,560,019 validated Silver trips** and **13,884 Gold daily-zone rows**.
-- Passed **8 of 8 Databricks data-quality checks**.
-- Preserved **3,253,109 January** and **3,306,910 February** Silver rows after January arrived second.
-- Refreshed **33 affected date partitions** during the late-arrival run.
-- Verified same-file rerun behavior with unchanged business-table counts and passing uniqueness checks.
-- Power BI reports **$138.81M revenue**, **$21.16 revenue per trip**, **5.68 average miles**, and **37.57% peak-period share**.
+| Area | Verified result | Evidence |
+|---|---|---|
+| Databricks ingestion | **7,052,769 Bronze** records across January–February 2025 | [Cloud run history](docs/databricks_execution.md) |
+| Curated data | **6,560,019 Silver** trips; **13,884 Gold** daily-zone rows | [Execution reference](docs/evidence/cloud_execution_reference.json) |
+| Quality assurance | **8/8 Databricks checks** passed in the documented historical run | [Data-quality dashboard](docs/images/data_quality.png) |
+| Incremental behavior | January arrived after February; **33 historical partitions** refreshed | [Execution details](docs/databricks_execution.md) |
+| Power BI | **$138.81M** recorded revenue; **$21.16** per trip; **5.68 miles** average trip distance | [Dashboard gallery](#dashboard-gallery) |
+| Local pipeline | Added corrected-date refresh, trip/revenue reconciliation, and run lineage; test results verified by automated checks | [Engineering validation](docs/ENGINEERING_VALIDATION_v1.md) |
 
-## Architecture
+*Cloud figures come from the previously documented September 10, 2026 Databricks executions, not a new cloud benchmark. The local test fixture is separate from the two-month taxi dataset.*
+
+## Dashboard gallery
+
+The four-page Power BI report focuses on operational demand, geographic performance, trip patterns, and pipeline assurance.
+
+| Operations overview | Zone performance |
+|:---:|:---:|
+| [![Operations overview](docs/images/operations_overview.png)](docs/images/operations_overview.png) | [![Zone performance](docs/images/zone_performance.png)](docs/images/zone_performance.png) |
+| Revenue, trips, distance, and daily demand | Pickup-zone activity and comparative metrics |
+
+| Time patterns | Data quality |
+|:---:|:---:|
+| [![Time patterns](docs/images/time_patterns.png)](docs/images/time_patterns.png) | [![Data quality](docs/images/data_quality.png)](docs/images/data_quality.png) |
+| Demand seasonality and peak-period share | Quality pass rates and observed checks |
+
+[Power BI measures and report design](docs/power_bi.md)
+
+## Data engineering and reliability
+
+The core challenge is not charting taxi records—it's preserving trustworthy analytical outputs across reruns and batches received out of chronological order.
+
+- **Medallion architecture:** source-aligned Bronze; validated, trip-grain Silver; daily pickup-zone Gold.
+- **Deduplication and reruns:** deterministic trip identifiers and Delta `MERGE` in Databricks; idempotent key-based Silver upserts in the local pipeline.
+- **Late-arriving corrections:** local incremental refresh now includes both the **previous and updated pickup dates** when an existing trip changes date, preventing stale historical Gold rows.
+- **Quality gates:** row uniqueness, duration and distance validity, location completeness, Gold grain, trip-count reconciliation, and revenue reconciliation.
+- **Observability:** cloud quality/run-log Delta tables; local source fingerprints, refreshed-date lists, batch accounting, and append-only execution summaries.
+- **Analytics serving:** Gold metrics feed Power BI; dbt staging and incremental marts enforce an independent SQL model in CI.
+
+These local reliability additions do not imply that the original Databricks notebook was rerun. [Read the validation record](docs/ENGINEERING_VALIDATION_v1.md).
+
+## Solution architecture
 
 ```mermaid
-flowchart TD
-    A[NYC TLC Parquet] --> B[Databricks notebook]
+flowchart LR
+    A[Official NYC TLC Parquet] --> B[Databricks / PySpark]
     B --> C[Bronze Delta]
     C --> D[Silver Delta]
-    D --> E[Quality and run logs]
-    D --> F[Gold daily-zone metrics]
-    F --> G[Power BI]
-    H[Local sample] --> I[Python, DuckDB, and dbt CI]
+    D --> E[Gold daily-zone Delta]
+    E --> F[Power BI]
+    D --> G[Quality + run logs]
+    H[Local fixture / batches] --> I[pandas + Parquet]
+    I --> J[DuckDB + dbt]
+    I --> K[pytest + GitHub Actions]
 ```
 
-See [architecture and design decisions](docs/architecture.md) for layer grains and runtime boundaries.
+The cloud and local paths implement comparable layer responsibilities but are **different runtimes with different transactional guarantees**. [Architecture design](docs/architecture.md) · [Databricks execution notes](docs/databricks_execution.md)
 
-## Technical implementation
+## Repository map
 
-- **Bronze:** preserves source fields and adds deterministic record IDs, source metadata, ingestion timestamps, and batch IDs.
-- **Silver:** validates types and locations, removes invalid durations and distances, deduplicates trips, and derives reusable features.
-- **Gold:** aggregates by pickup date and pickup zone for operational reporting.
-- **Idempotency:** Delta `MERGE` prevents the same source records from duplicating Bronze and Silver data.
-- **Late arrivals:** only dates touched by an incoming batch are rebuilt in Gold, including historical partitions.
-- **Auditability:** data-quality results and pipeline-run summaries are stored as Delta tables.
-- **dbt:** staging and incremental mart models reproduce the analytical contract locally with eight schema and grain tests.
-- **Automation:** GitHub Actions runs Ruff, pytest, notebook compilation, the sample pipeline, and `dbt build`.
-
-## Databricks execution
-
-Authenticated execution on Databricks Free Edition was completed on September 10, 2026 UTC.
-
-| Scenario | Bronze rows | Silver rows | Gold rows | Quality | Refreshed dates | Duration |
-|---|---:|---:|---:|---:|---:|---:|
-| February initial load | 3,577,543 | 3,306,910 | 6,668 | 8/8 | 30 | 86.66 s |
-| February idempotent rerun | 3,577,543 | 3,306,910 | 6,668 | 8/8 | 30 | 163.55 s |
-| Recovery after missing-source test | 3,577,543 | 3,306,910 | 6,668 | 8/8 | 30 | 149.60 s |
-| January processed after February | 7,052,769 | 6,560,019 | 13,884 | 8/8 | 33 | 150.97 s |
-
-The controlled failure used a nonexistent source path and raised `FileNotFoundError` before table writes. Restoring the correct path returned the pipeline to the verified February counts. Detailed execution notes are in [docs/databricks_execution.md](docs/databricks_execution.md).
-
-## Power BI report
-
-| Page | Purpose |
+| Location | Contents |
 |---|---|
-| [Operations Overview](docs/images/operations_overview.png) | Demand and revenue KPIs with daily trip volume |
-| [Zone Performance](docs/images/zone_performance.png) | Top pickup zones by trips with comparative metrics |
-| [Time Patterns](docs/images/time_patterns.png) | Daily demand and peak-period share |
-| [Data Quality](docs/images/data_quality.png) | Latest pipeline checks and pass rate |
+| [`databricks/`](databricks/) | PySpark/Delta medallion notebook and cloud ingestion logic |
+| [`src/`](src/) | Local transformations, quality contracts, batch lineage, and ingestion |
+| [`models/`](models/) | dbt staging and pickup-zone mart models |
+| [`docs/`](docs/) | Cloud run evidence, architecture, reporting, and validation notes |
+| [`docs/images/`](docs/images/) | Actual Power BI dashboard screenshots |
+| [`tests/`](tests/) | Quality-gate, late-arrival, reproducibility, and original transformation tests |
 
-The semantic model and DAX measures are documented in [docs/power_bi.md](docs/power_bi.md).
+<details>
+<summary><strong>Local execution and reproducibility</strong></summary>
 
-## Run locally
-
-### Windows PowerShell
+Python 3.12, Windows PowerShell:
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python -m pytest -q
+python -m ruff check src tests
 python -m src.pipeline --sample
 dbt build --profiles-dir .
 ```
 
-### macOS or Linux
+Additional local CSV or Parquet batch:
 
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python -m pytest -q
-python -m src.pipeline --sample
-dbt build --profiles-dir .
+```powershell
+python -m src.pipeline --input path/to/local_batch.csv
 ```
 
-The sample pipeline writes Bronze, Silver, and Gold Parquet outputs, six quality results, and a JSON run summary. Generated outputs are ignored by Git.
+The run summary, run history, Bronze/Silver/Gold Parquet datasets, and local database are generated locally and excluded from the repository.
 
-## Testing and CI
+</details>
 
-- **3 Python tests** cover transformations, quality rules, and late-arrival upserts.
-- **8 dbt tests** enforce required fields, uniqueness, and the daily-zone grain.
-- The local sample produces **12 Bronze, 12 Silver, and 12 Gold rows** with **6 of 6 checks passing**.
-- [GitHub Actions CI run 34505698381](https://github.com/RishiRatnakarData/urban-mobility-analytics-engineering/actions/runs/34505698381) completed successfully.
-- CI is cloud-independent and does not require Databricks credentials.
+## Source and scope
 
-## Repository structure
+**Source:** [NYC Taxi & Limousine Commission Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page).
 
-```text
-databricks/          PySpark and Delta Lake source notebook
-src/                 local medallion and late-arrival implementation
-models/              dbt staging and incremental mart models
-tests/               Python and dbt data tests
-docs/                architecture, execution, and Power BI documentation
-data/sample/         deterministic offline fixture for CI
-.github/workflows/   continuous-integration workflow
-```
+This is a technical research/portfolio implementation, not an operated transportation production system. The current Databricks evidence covers Yellow Taxi records from January and February 2025. The local dbt mart has a documented 62-day lookback limitation for arbitrarily old corrections; production ingestion, alerting, and cost controls would require additional infrastructure. [Engineering boundaries and test evidence](docs/ENGINEERING_VALIDATION_v1.md).
 
-## Limitations
+---
 
-- The local fixture validates behavior but is not representative of citywide traffic volume.
-- The current cloud implementation processes NYC Yellow Taxi data rather than multiple cities or travel modes.
-- The deterministic trip key could theoretically collide when distinct trips share every input field.
-- A production deployment would require job orchestration, incremental file discovery, quarantine handling, alert delivery, access control, environment promotion, and cost monitoring.
-- Taxi activity may reflect geographic and service-access biases.
-
-## Technology
-
-Databricks, PySpark, Delta Lake, Python, pandas, DuckDB, dbt, SQL, Parquet, Power BI, pytest, Ruff, GitHub Actions
-
-## Data source
-
-[NYC Taxi & Limousine Commission Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
-
-## Author
-
-Rishi Ratnakar | [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) | [GitHub](https://github.com/RishiRatnakarData)
+**Rishi Ratnakar** · [GitHub](https://github.com/RishiRatnakarData) · [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar/)
