@@ -43,4 +43,6 @@ On future **local CLI runs**, `src/pipeline.py` records elapsed wall-clock time 
 - `failed_validation` — a failed latest CLI attempt, a failed quality check, corrupted key/reconciliation data, or missing required persisted outputs.
 - `snapshot_passed_latest_attempt_unknown` — the snapshot checks passed but no reliable latest CLI attempt result was recorded.
 
+A `failed_validation` CLI report is still written to JSON and then exits with code `2`, allowing shell scripts and GitHub Actions to fail visibly. A stale success attempt marker cannot establish current health: it produces `snapshot_passed_latest_attempt_unknown` when the persisted snapshot itself is valid.
+
 A `passed` status is **not** an uptime, latency SLA, Delta Lake, or production reliability claim. Warnings may coexist with passed validation. Any historical September 2026 cloud-run row counts and durations remain exactly as previously reported; this local add-on makes no new Databricks measurements.

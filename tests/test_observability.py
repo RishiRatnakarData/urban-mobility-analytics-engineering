@@ -163,6 +163,37 @@ def test_bad_threshold_or_time_fails(snapshot):
         build_report(snapshot, now=datetime(2026, 11, 20))
 
 
+def test_outdated_success_marker_cannot_claim_current_health(snapshot):
+    path = snapshot / "artifacts/last_attempt.json"
+    path.write_text(json.dumps({
+        "run_utc": "2026-11-20T18:40:00+00:00",
+        "status": "success",
+    }), encoding="utf-8")
+    report = build_report(snapshot, now=NOW)
+    assert report["status"] == "snapshot_passed_latest_attempt_unknown"
+    assert any("predates" in entry for entry in report["warnings"])
+
+
+def test_cli_returns_nonzero_after_writing_failed_report(snapshot, monkeypatch):
+    import sys
+    from src.observability import main
+
+    path = snapshot / "artifacts/last_attempt.json"
+    path.write_text(json.dumps({
+        "run_utc": "2026-11-20T18:59:00+00:00",
+        "status": "failed",
+        "error_type": "ValueError",
+    }), encoding="utf-8")
+    output = snapshot / "artifacts/invalid_observability.json"
+    monkeypatch.setattr(sys, "argv", [
+        "observability", "--root", str(snapshot), "--out", str(output)
+    ])
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 2
+    assert json.loads(output.read_text(encoding="utf-8"))["status"] == "failed_validation"
+
+
 def test_cli_writes_auditable_json(snapshot, monkeypatch):
     import sys
     from src.observability import main

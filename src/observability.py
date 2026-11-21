@@ -189,6 +189,7 @@ def build_report(
             errors.append("Persisted quality-check totals differ from run summary")
 
     attempt_info = {"status": "not_recorded", "run_utc": None}
+    attempt_is_fresh = False
     if attempt is not None:
         status = attempt.get("status")
         if status not in {"success", "failed"}:
@@ -200,12 +201,14 @@ def build_report(
             attempt_info["error_type"] = attempt.get("error_type")
         elif summary and attempt_time < _as_utc(summary["run_utc"], field="run_utc"):
             warnings.append("Attempt status predates the successful run summary")
+        elif status == "success":
+            attempt_is_fresh = True
     else:
         warnings.append("Latest attempted status unavailable (older runs or direct run_batch calls)")
 
     if errors:
         status = "failed_validation"
-    elif attempt_info["status"] == "success":
+    elif attempt_info["status"] == "success" and attempt_is_fresh:
         status = "passed"
     else:
         status = "snapshot_passed_latest_attempt_unknown"
@@ -242,6 +245,8 @@ def main() -> None:
     print(f"Pipeline observability: {report['status']}")
     print(f"Validation errors: {len(report['errors'])}; warnings: {len(report['warnings'])}")
     print(f"Report: {args.out}")
+    if report["status"] == "failed_validation":
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

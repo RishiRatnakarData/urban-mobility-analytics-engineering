@@ -20,6 +20,10 @@ jobs:
       - run: pytest -q
       - run: python -m src.pipeline --sample
       - run: dbt build --profiles-dir .
+      - run: python -m src.observability --out artifacts/observability.json
+      - name: Verify observability report
+        run: |
+          python -c "import json; from pathlib import Path; d=json.loads(Path('artifacts/observability.json').read_text()); assert d['status']=='passed'; assert not d['errors']; assert d['last_attempt']['status']=='success'; assert d['current_snapshot']['silver_rows_observed']==12; assert d['quality_checks']['checks_passed']==10"
       - name: Verify local quality summary
         run: |
           python -c "import json; from pathlib import Path; p=Path('artifacts/run_summary.json'); d=json.loads(p.read_text()); assert d['quality_checks_passed']==10 and d['quality_checks_total']==10; assert d['silver_rows']==12"

@@ -62,6 +62,8 @@ These local reliability additions do not imply that the original Databricks note
 
 A read-only command-line report now consolidates existing **local** batch accounting, Silver/Gold row counts, source and data freshness, null/duplicate checks, persisted quality failures, and Gold/Silver reconciliation. The local CLI additionally records **measured duration for new runs** and a separate latest-attempt success/failure marker, without changing the PySpark/Delta notebook or the Power BI dashboards. Historical 2025 source data is not flagged stale unless a freshness threshold is explicitly requested.
 
+The observability CLI now exits nonzero when validation fails, and the GitHub CI pipeline verifies the report after rebuilding the local sample. Its `passed` status remains a local snapshot check, not production uptime monitoring.
+
 [**Observability commands, report fields, and limitations**](docs/PIPELINE_OBSERVABILITY.md)
 
 ## Solution architecture
