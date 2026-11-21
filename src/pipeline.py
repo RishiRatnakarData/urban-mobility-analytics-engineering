@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
@@ -69,6 +70,7 @@ def _write_parquet_replacement(frame: pd.DataFrame, destination: Path) -> None:
 
 def run_batch(source: Path, *, sample: bool = False) -> dict:
     """Run one local batch; return a reproducible accounting of changed date partitions."""
+    started = time.perf_counter()
     source = source.resolve()
     raw = load_source(source)
     if raw.empty:
@@ -122,6 +124,7 @@ def run_batch(source: Path, *, sample: bool = False) -> dict:
         "source_file_name": source.name,
         "source_sha256": digest,
         "source_byte_count": source.stat().st_size,
+        "processing_duration_seconds": round(time.perf_counter() - started, 4),
         "bronze_batch_rows": len(raw),
         "silver_rows": len(silver),
         "gold_rows": len(gold),
@@ -142,16 +145,33 @@ def run_sample() -> None:
     run_batch(ROOT / "data" / "sample" / "taxi_sample.csv", sample=True)
 
 
+def _write_last_attempt(status: str, error: Exception | None = None) -> None:
+    """Keep the latest CLI attempt separate from the last successful summary."""
+    artifacts = ROOT / "artifacts"
+    artifacts.mkdir(parents=True, exist_ok=True)
+    info = {"run_utc": datetime.now(UTC).isoformat(), "status": status}
+    if error is not None:
+        info["error_type"] = type(error).__name__
+    path = artifacts / "last_attempt.json"
+    path.write_text(json.dumps(info, indent=2), encoding="utf-8")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Local NYC taxi medallion batch")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--sample", action="store_true")
     source.add_argument("--input", type=Path, help="CSV or Parquet batch")
     args = parser.parse_args()
-    if args.sample:
-        run_sample()
+    try:
+        if args.sample:
+            run_sample()
+        else:
+            run_batch(args.input)
+    except Exception as exc:
+        _write_last_attempt("failed", exc)
+        raise
     else:
-        run_batch(args.input)
+        _write_last_attempt("success")
 
 
 if __name__ == "__main__":

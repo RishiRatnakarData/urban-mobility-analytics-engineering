@@ -58,6 +58,12 @@ The core challenge is not charting taxi records—it's preserving trustworthy an
 
 These local reliability additions do not imply that the original Databricks notebook was rerun. [Read the validation record](docs/ENGINEERING_VALIDATION_v1.md).
 
+## Local pipeline observability
+
+A read-only command-line report now consolidates existing **local** batch accounting, Silver/Gold row counts, source and data freshness, null/duplicate checks, persisted quality failures, and Gold/Silver reconciliation. The local CLI additionally records **measured duration for new runs** and a separate latest-attempt success/failure marker, without changing the PySpark/Delta notebook or the Power BI dashboards. Historical 2025 source data is not flagged stale unless a freshness threshold is explicitly requested.
+
+[**Observability commands, report fields, and limitations**](docs/PIPELINE_OBSERVABILITY.md)
+
 ## Solution architecture
 
 ```mermaid
